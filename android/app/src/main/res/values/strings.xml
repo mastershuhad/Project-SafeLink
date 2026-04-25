@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- App -->
+    <string name="app_name">SafeLink</string>
+    <string name="app_tagline">Protecting you from phishing links</string>
+    <string name="accessibility_service_label">SafeLink URL Protection</string>
+
+    <!-- Main activity -->
+    <string name="status_protection_on">Protection is ON</string>
+    <string name="status_protection_off">Protection is OFF</string>
+    <string name="protection_toggle_label">Enable URL Protection</string>
+    <string name="btn_scan_history">View Scan History</string>
+
+    <!-- Setup -->
+    <string name="setup_title">Enable SafeLink Protection</string>
+    <string name="setup_body">SafeLink needs Accessibility permission to check links in WhatsApp, SMS, Facebook and other apps before they open.</string>
+    <string name="setup_btn">Enable in Accessibility Settings</string>
+    <string name="setup_hint">After enabling, return to this screen — SafeLink will start automatically.</string>
+
+    <!-- Verdict popup -->
+    <string name="verdict_malicious_high">Dangerous Link Blocked!</string>
+    <string name="verdict_malicious_high_sub">This link is a phishing or malware attack. Do NOT open it.</string>
+    <string name="verdict_malicious_medium">This Link Looks Dangerous</string>
+    <string name="verdict_malicious_medium_sub">Our system thinks this is a phishing or malware link.</string>
+    <string name="verdict_warning">Suspicious Link — Be Careful</string>
+    <string name="verdict_warning_sub">This link has unusual features. Open only if you are certain it is safe.</string>
+    <string name="verdict_blocked">This Link Is Blocked</string>
+    <string name="verdict_blocked_sub">This website is known to be malicious.</string>
+
+    <string name="btn_go_back">Go Back (Safe)</string>
+    <string name="btn_open_anyway">Open Anyway</string>
+    <string name="btn_ok">OK</string>
+    <string name="confidence_format">Confidence: %1$d%%</string>
+
+    <!-- No internet popup -->
+    <string name="no_internet_title">No Internet Connection</string>
+    <string name="no_internet_body1">SafeLink cannot verify this link right now because your phone is not connected to the internet.</string>
+    <string name="no_internet_body2">Please connect to Wi-Fi or mobile data, then tap the link again.</string>
+
+    <!-- Scan history -->
+    <string name="scan_history_title">Scan History</string>
+    <string name="search_hint">Search URLs or verdicts…</string>
+    <string name="no_scans_yet">No scans yet.\nLinks will appear here as you browse.</string>
+    <string name="btn_clear_history">Clear All History</string>
+    <string name="clear_history_title">Clear History?</string>
+    <string name="clear_history_message">This will permanently delete all scan records.</string>
+    <string name="clear">Clear</string>
+    <string name="cancel">Cancel</string>
+
+    <!-- Scan detail -->
+    <string name="scan_detail_title">Scan Details</string>
+    <string name="label_url">URL</string>
+    <string name="label_verdict">Verdict</string>
+    <string name="label_confidence">Confidence</string>
+    <string name="label_reason">Reason</string>
+    <string name="label_gemini">AI Explanation</string>
+    <string name="label_scores">Technical Scores</string>
+    <string name="label_cnn">CNN Score</string>
+    <string name="label_bert">BERT Score</string>
+    <string name="label_anomaly">Anomaly MSE</string>
+    <string name="label_domain_age">Domain Age</string>
+    <string name="label_layer">Detection Layer</string>
+    <string name="label_timestamp">Scanned At</string>
+    <string name="unknown">Unknown</string>
+</resources>

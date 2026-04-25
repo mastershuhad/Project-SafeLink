@@ -1,0 +1,31 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python -c \"import tensorflow; print\\('TF', tensorflow.__version__\\)\")",
+      "Bash(python -c \"import pandas; print\\('pandas', pandas.__version__\\)\")",
+      "Bash(python -c \"import sklearn; print\\('sklearn', sklearn.__version__\\)\")",
+      "Bash(python -c \"import tqdm; print\\('tqdm ok'\\)\")",
+      "Bash(conda run *)",
+      "Bash(conda install *)",
+      "Bash(python -c ' *)",
+      "Bash(pip install *)",
+      "Bash(python -c \"import transformers; print\\(transformers.__version__\\)\")",
+      "Bash(python -c \"import sys; [print\\(l\\) for l in sys.stdin if 'ONNX' in l or 'Error' in l or 'MB' in l]\")",
+      "Bash(set PYTHONIOENCODING=utf-8)",
+      "Bash(python -W ignore -c ' *)",
+      "Bash(python -c \"import sys; [sys.stdout.write\\(l\\) for l in sys.stdin if not '✅' in l and not '❌' in l]\")",
+      "Bash(python -c \"import tensorflow as tf; print\\(tf.__version__\\)\")",
+      "Bash(pip show *)",
+      "Bash(python -c \"import onnxruntime as ort; print\\('ort', ort.__version__\\)\")",
+      "Bash(pip list *)",
+      "Bash(py -3.12 -m pip list)",
+      "Bash(py -3.12 -c \"import sys; print\\(sys.executable\\)\")",
+      "Bash(\"g:/BICT/Project/SafeLink/ml_pipeline/venv_train/Scripts/python.exe\" -m pip list)",
+      "Bash(awk -F'.' '{ext=$\\(NF\\); print ext}')",
+      "Bash(grep -E '\\\\.\\(py|pyc|pyi|pyx|pxd\\)$')",
+      "Read(//tmp/**)",
+      "Bash(grep -E '\\\\.\\(gradle|toml|properties\\)$' /tmp/safelink_all_files.txt)",
+      "Bash(grep -E '\\\\.\\(txt|csv\\)$' /tmp/safelink_all_files.txt)"
+    ]
+  }
+}

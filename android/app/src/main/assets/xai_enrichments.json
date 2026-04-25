@@ -1,0 +1,58 @@
+[
+  {
+    "brandId": "hnb",
+    "xaiReason": "This link is pretending to be HNB Bank to steal your internet banking username and password. HNB will never send you a link to login — always go directly to hnb.lk."
+  },
+  {
+    "brandId": "sampath",
+    "xaiReason": "This link pretends to be Sampath Bank. Scammers want to steal your Sampath online banking password. Always visit sampath.lk directly by typing it in your browser."
+  },
+  {
+    "brandId": "boc",
+    "xaiReason": "This link is a fake Bank of Ceylon page. Do not enter your account number or PIN. Visit boc.lk directly."
+  },
+  {
+    "brandId": "combank",
+    "xaiReason": "This link pretends to be Commercial Bank. Your banking details could be stolen. Go directly to combank.lk."
+  },
+  {
+    "brandId": "peoples",
+    "xaiReason": "This link imitates Peoples Bank to steal your account details. Real Peoples Bank links come from peoples.lk only."
+  },
+  {
+    "brandId": "dialog",
+    "xaiReason": "This link pretends to be Dialog to steal your account or payment details. Legitimate Dialog links come from dialog.lk."
+  },
+  {
+    "brandId": "mobitel",
+    "xaiReason": "This link imitates Mobitel. Real Mobitel websites end in mobitel.lk — do not enter your number or password here."
+  },
+  {
+    "brandId": "paypal",
+    "xaiReason": "This link pretends to be PayPal to steal your payment details. The real PayPal website is paypal.com — never enter your password on any other website."
+  },
+  {
+    "brandId": "amazon",
+    "xaiReason": "This link is a fake Amazon page. Scammers want to steal your Amazon account and payment card details. Only shop on amazon.com."
+  },
+  {
+    "brandId": "google",
+    "xaiReason": "This link pretends to be Google to steal your Gmail or Google account password. Real Google links come from google.com or accounts.google.com."
+  },
+  {
+    "brandId": "facebook",
+    "xaiReason": "This link imitates Facebook to steal your login details. Real Facebook links come from facebook.com — never enter your password elsewhere."
+  },
+  {
+    "brandId": "apple",
+    "xaiReason": "This link pretends to be Apple to steal your Apple ID and password or payment card. Real Apple links come from apple.com only."
+  },
+  {
+    "brandId": "microsoft",
+    "xaiReason": "This link imitates Microsoft to steal your email or Office 365 password. Real Microsoft links come from microsoft.com, outlook.com, or office.com."
+  },
+  {
+    "brandId": "dhl",
+    "xaiReason": "This link pretends to be DHL to make you pay a fake delivery fee and steal your card details. DHL tracks parcels at dhl.com — never pay via a link in a message."
+  }
+]

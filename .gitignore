@@ -1,0 +1,36 @@
+# API keys and local config
+android/local.properties
+
+# Android build outputs
+android/.gradle/
+android/app/build/
+android/build/
+
+# IDE files
+.idea/
+*.iml
+.vscode/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.env
+venv/
+.venv/
+venv_train/
+*_venv/
+*_env/
+
+# Large generated data (reproducible via ml_pipeline)
+ml_pipeline/data/
+
+# ML model artifacts (large files)
+*.h5
+*.pkl
+*.pt
+*.pth
+
+# OS files
+.DS_Store
+Thumbs.db
