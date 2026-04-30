@@ -1,0 +1,10 @@
+{
+  "thresholds": {
+    "short": 0.03145306929945946,
+    "medium": 0.05928981304168701,
+    "long": 0.4977409839630127
+  },
+  "short_max": 30,
+  "long_min": 80,
+  "description": "Adaptive 95th-percentile MSE thresholds per URL length category"
+}

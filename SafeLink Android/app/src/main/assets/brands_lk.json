@@ -1,0 +1,74 @@
+[
+  {
+    "id": "hnb",
+    "displayName": "HNB Bank",
+    "domains": ["hnb.lk", "hnbonline.com"],
+    "keywords": ["hnb", "hattonbank", "hatton national"]
+  },
+  {
+    "id": "sampath",
+    "displayName": "Sampath Bank",
+    "domains": ["sampath.lk", "sampathvisacard.com"],
+    "keywords": ["sampath", "sampathbank"]
+  },
+  {
+    "id": "boc",
+    "displayName": "Bank of Ceylon",
+    "domains": ["boc.lk"],
+    "keywords": ["boc", "bankofceylon", "bank of ceylon"]
+  },
+  {
+    "id": "combank",
+    "displayName": "Commercial Bank",
+    "domains": ["combank.lk", "combank.net"],
+    "keywords": ["combank", "commercial bank", "commercialbank"]
+  },
+  {
+    "id": "peoples",
+    "displayName": "Peoples Bank",
+    "domains": ["peoples.lk"],
+    "keywords": ["peoples", "peoplesbank", "peoples bank"]
+  },
+  {
+    "id": "ndb",
+    "displayName": "NDB Bank",
+    "domains": ["ndbbank.lk"],
+    "keywords": ["ndb", "ndbbank"]
+  },
+  {
+    "id": "dfcc",
+    "displayName": "DFCC Bank",
+    "domains": ["dfcc.lk"],
+    "keywords": ["dfcc", "dfccbank"]
+  },
+  {
+    "id": "dialog",
+    "displayName": "Dialog Axiata",
+    "domains": ["dialog.lk", "mydialog.lk"],
+    "keywords": ["dialog", "dialogaxiata", "mydialog"]
+  },
+  {
+    "id": "mobitel",
+    "displayName": "Mobitel",
+    "domains": ["mobitel.lk"],
+    "keywords": ["mobitel"]
+  },
+  {
+    "id": "slt",
+    "displayName": "SLT",
+    "domains": ["slt.lk", "sltmobitel.lk"],
+    "keywords": ["slt", "sltmobitel", "sri lanka telecom"]
+  },
+  {
+    "id": "cbsl",
+    "displayName": "Central Bank of Sri Lanka",
+    "domains": ["cbsl.gov.lk"],
+    "keywords": ["cbsl", "central bank"]
+  },
+  {
+    "id": "ird",
+    "displayName": "Inland Revenue",
+    "domains": ["ird.gov.lk"],
+    "keywords": ["ird", "inland revenue"]
+  }
+]

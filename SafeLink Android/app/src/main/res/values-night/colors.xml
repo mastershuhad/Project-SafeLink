@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Primary brand - slightly lightened for dark mode -->
+    <color name="primary">#2C5A85</color>
+    <color name="accent">#45B1E8</color>
+
+    <!-- Verdict colours - desaturated for dark mode -->
+    <color name="safe_green">#34C759</color>
+    <color name="warning_orange">#FF9F0A</color>
+    <color name="danger_red">#FF453A</color>
+    <color name="danger_red_soft">#FF6961</color>
+
+    <!-- UI scaffolding -->
+    <color name="surface">#101418</color>
+    <color name="on_surface">#E1E1E1</color>
+    <color name="card_background">#1A1F26</color>
+    <color name="url_box_background">#0D1117</color>
+    <color name="detail_subcard_background">#0D1117</color>
+    <color name="divider">#2D333B</color>
+    <color name="divider_light">#2D333B</color>
+
+    <!-- Text -->
+    <color name="text_primary">#E1E1E1</color>
+    <color name="text_secondary">#90A4AE</color>
+    <color name="text_hint">#546E7A</color>
+</resources>

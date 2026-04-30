@@ -1,0 +1,7 @@
+# Copy this file to local.properties and fill in your API keys.
+# DO NOT commit local.properties to version control.
+
+sdk.dir=C\:\\Users\\YourUser\\AppData\\Local\\Android\\Sdk
+
+GSB_API_KEY=YOUR_GOOGLE_SAFE_BROWSING_API_KEY_HERE
+GEMINI_API_KEY=YOUR_GEMINI_API_KEY_HERE

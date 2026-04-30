@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/surface">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:gravity="center_horizontal"
+        android:padding="32dp"
+        android:paddingTop="48dp"
+        android:paddingBottom="48dp">
+
+        <!-- Logo -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/app_name"
+            android:textSize="32sp"
+            android:textStyle="bold"
+            android:textColor="@color/primary" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:textSize="14sp"
+            android:textColor="@color/text_secondary"
+            android:text="@string/app_tagline" />
+
+        <!-- Step indicator -->
+        <TextView
+            android:id="@+id/tvStepIndicator"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="28dp"
+            android:textSize="13sp"
+            android:textColor="@color/text_hint"
+            android:text="" />
+
+        <!-- ── Step 1: Set SafeLink as default browser ── -->
+        <LinearLayout
+            android:id="@+id/containerStep1"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:gravity="center_horizontal">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="20dp"
+                android:textSize="22sp"
+                android:textStyle="bold"
+                android:textColor="@color/text_primary"
+                android:text="@string/setup_default_browser_title" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:textSize="15sp"
+                android:textColor="@color/text_secondary"
+                android:lineSpacingMultiplier="1.4"
+                android:textAlignment="center"
+                android:text="@string/setup_default_browser_body" />
+
+            <Button
+                android:id="@+id/btnSetDefaultBrowser"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="36dp"
+                android:paddingStart="32dp"
+                android:paddingEnd="32dp"
+                android:text="@string/setup_default_browser_btn"
+                android:backgroundTint="@color/primary" />
+
+        </LinearLayout>
+
+        <!-- ── Step 2: Choose real browser ── -->
+        <LinearLayout
+            android:id="@+id/containerStep2"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:gravity="center_horizontal"
+            android:visibility="gone">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="20dp"
+                android:textSize="22sp"
+                android:textStyle="bold"
+                android:textColor="@color/text_primary"
+                android:text="@string/setup_choose_browser_title" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:textSize="15sp"
+                android:textColor="@color/text_secondary"
+                android:lineSpacingMultiplier="1.4"
+                android:textAlignment="center"
+                android:text="@string/setup_choose_browser_body" />
+
+            <!-- Browser buttons added dynamically -->
+            <LinearLayout
+                android:id="@+id/browserButtonContainer"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:layout_marginTop="28dp" />
+
+            <TextView
+                android:id="@+id/tvNoBrowsers"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="28dp"
+                android:textSize="14sp"
+                android:textColor="@color/text_hint"
+                android:textAlignment="center"
+                android:lineSpacingMultiplier="1.4"
+                android:visibility="gone"
+                android:text="@string/setup_no_browsers" />
+
+        </LinearLayout>
+
+    </LinearLayout>
+</ScrollView>

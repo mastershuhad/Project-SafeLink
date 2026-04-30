@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- App -->
+    <string name="app_name">SafeLink</string>
+    <string name="app_tagline">Protecting you from phishing links</string>
+    <string name="accessibility_service_label">SafeLink URL Protection</string>
+
+    <!-- Main activity -->
+    <string name="status_protection_on">Protection is ON</string>
+    <string name="status_protection_off">Protection is OFF</string>
+    <string name="protection_toggle_label">Enable URL Protection</string>
+    <string name="btn_scan_history">View Scan History</string>
+    <string name="btn_change_browser">Change</string>
+    <string name="real_browser_label">Real browser: %1$s</string>
+    <string name="browser_not_selected">Not selected</string>
+    <string name="browser_picker_title">Select your real browser</string>
+    <string name="banner_not_default_browser">SafeLink is not the default browser — tap to fix</string>
+
+    <!-- Setup -->
+    <string name="setup_step_indicator">Step %1$d of 2</string>
+    <string name="setup_default_browser_title">Set as Default Browser</string>
+    <string name="setup_default_browser_body">When SafeLink is the default browser, every link you tap gets scanned before opening. Safe links open automatically in your chosen browser.</string>
+    <string name="setup_default_browser_btn">Set SafeLink as Default Browser</string>
+    <string name="setup_choose_browser_title">Choose Your Browser</string>
+    <string name="setup_choose_browser_body">SafeLink needs to know which browser to open verified links in. Select your preferred browser below.</string>
+    <string name="setup_no_browsers">No browsers found. Please install Chrome or Firefox, then reopen SafeLink.</string>
+
+    <!-- Verdict popup -->
+    <string name="verdict_malicious_high">Dangerous Link Blocked!</string>
+    <string name="verdict_malicious_high_sub">This link is a phishing or malware attack. Do NOT open it.</string>
+    <string name="verdict_malicious_medium">This Link Looks Dangerous</string>
+    <string name="verdict_malicious_medium_sub">Our system thinks this is a phishing or malware link.</string>
+    <string name="verdict_warning">Suspicious Link — Be Careful</string>
+    <string name="verdict_warning_sub">This link has unusual features. Open only if you are certain it is safe.</string>
+    <string name="verdict_blocked">This Link Is Blocked</string>
+    <string name="verdict_blocked_sub">This website is known to be malicious.</string>
+
+    <string name="btn_go_back">Go Back (Safe)</string>
+    <string name="btn_open_anyway">Open Anyway</string>
+    <string name="btn_ok">OK</string>
+    <string name="confidence_format">Confidence: %1$d%%</string>
+
+    <!-- No internet popup -->
+    <string name="no_internet_title">No Internet Connection</string>
+    <string name="no_internet_body1">SafeLink cannot verify this link right now because your phone is not connected to the internet.</string>
+    <string name="no_internet_body2">Please connect to Wi-Fi or mobile data, then tap the link again.</string>
+
+    <!-- Scan history -->
+    <string name="scan_history_title">Scan History</string>
+    <string name="search_hint">Search URLs or verdicts…</string>
+    <string name="no_scans_yet">No scans yet.\nLinks will appear here as you browse.</string>
+    <string name="btn_clear_history">Clear All History</string>
+    <string name="clear_history_title">Clear History?</string>
+    <string name="clear_history_message">This will permanently delete all scan records.</string>
+    <string name="clear">Clear</string>
+    <string name="cancel">Cancel</string>
+
+    <!-- Manual test -->
+    <string name="manual_test_title">Check a Link</string>
+    <string name="btn_manual_test">Check a Link</string>
+    <string name="manual_test_description">Paste any link below to scan it for phishing or malware.</string>
+    <string name="manual_test_hint">https://example.com</string>
+    <string name="btn_check_url">Scan</string>
+    <string name="manual_test_open">Open Link</string>
+    <string name="manual_test_reset">Check Another</string>
+    <string name="verdict_safe">This Link Is Safe</string>
+    <string name="verdict_safe_sub">No threats detected. You can open this link safely.</string>
+
+    <!-- Scan detail -->
+    <string name="scan_detail_title">Scan Details</string>
+    <string name="label_url">URL</string>
+    <string name="label_verdict">Verdict</string>
+    <string name="label_confidence">Confidence</string>
+    <string name="label_reason">Reason</string>
+    <string name="label_gemini">AI Explanation</string>
+    <string name="label_scores">Technical Scores</string>
+    <string name="label_cnn">CNN Score</string>
+    <string name="label_bert">BERT Score</string>
+    <string name="label_anomaly">Anomaly MSE</string>
+    <string name="label_domain_age">Domain Age</string>
+    <string name="label_layer">Detection Layer</string>
+    <string name="label_timestamp">Scanned At</string>
+    <string name="unknown">Unknown</string>
+</resources>
