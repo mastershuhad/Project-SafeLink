@@ -1,0 +1,26 @@
+package com.safelink.ui.theme
+
+import androidx.compose.ui.graphics.Color
+
+val Background = Color(0xFF061423)
+val Primary = Color(0xFFB0C6FF)
+val PrimaryContainer = Color(0xFF558DFF)
+val OnPrimary = Color(0xFF002D6E)
+val OnPrimaryContainer = Color(0xFF002661)
+val Surface = Color(0xFF061423)
+val SurfaceContainer = Color(0xFF132030)
+val SurfaceContainerLow = Color(0xFF0F1C2C)
+val SurfaceContainerHigh = Color(0xFF1E2B3B)
+val SurfaceContainerHighest = Color(0xFF283646)
+val SurfaceBright = Color(0xFF2D3A4A)
+val SurfaceVariant = Color(0xFF283646)
+val OnSurface = Color(0xFFD6E4F9)
+val OnSurfaceVariant = Color(0xFFC2C6D7)
+val Outline = Color(0xFF8C90A0)
+val OutlineVariant = Color(0xFF424655)
+val Error = Color(0xFFFFB4AB)
+val ErrorContainer = Color(0xFF93000A)
+val OnErrorContainer = Color(0xFFFFDAD6)
+val Tertiary = Color(0xFFFFB692)
+val TertiaryContainer = Color(0xFFEB6A19)
+val OnTertiaryContainer = Color(0xFF4B1B00)

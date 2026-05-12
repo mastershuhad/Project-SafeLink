@@ -1,0 +1,231 @@
+# -- Cell 12: Large-Scale Dataset Evaluation ('../Datasets/test Dataset.csv') --
+# 116,600 URLs   |   label 0 = benign (SAFE)   label 1 = phishing (MALICIOUS)
+#
+# Config:
+#   EVAL_MAX_URLS = 10_000  -> stratified 10k sample (always mixed benign+phishing)
+#   EVAL_MAX_URLS = None    -> full 116,600 rows
+# -----------------------------------------------------------------------------
+
+DATASET_PATH     = '../Datasets/safelink_test_dataset.csv'
+URL_COL          = 'url'
+LABEL_COL        = 'label'
+EVAL_MAX_URLS    = 10_000   # set to None to run all 116,600 rows
+REPORT_EVERY     = 1_000
+MAX_ERRORS_SHOWN = 20
+PLOT_OUTPUT      = 'accuracy_report_large.png'
+RANDOM_SEED      = 42
+
+import csv, time, sys, random
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+import numpy as np
+
+# ── Step 1: Pre-load all URL+label pairs and shuffle ──────────────────────────
+print('Loading dataset index ...')
+all_rows = []
+with open(DATASET_PATH, newline='', encoding='utf-8', errors='replace') as fh:
+    reader = csv.DictReader(fh)
+    for row in reader:
+        url = (row.get(URL_COL) or '').strip()
+        lbl = row.get(LABEL_COL, '').strip()
+        if url and lbl in ('0', '1'):
+            all_rows.append((url, int(lbl)))
+
+random.seed(RANDOM_SEED)
+random.shuffle(all_rows)
+
+if EVAL_MAX_URLS is not None:
+    all_rows = all_rows[:EVAL_MAX_URLS]
+
+n_total  = len(all_rows)
+n_benign = sum(1 for _, l in all_rows if l == 0)
+n_phish  = sum(1 for _, l in all_rows if l == 1)
+cap_label = f'{n_total:,} rows (shuffled sample)' if EVAL_MAX_URLS else f'ALL {n_total:,} rows'
+print('=' * 76)
+print('  SafeLink -- Large-Scale Evaluation')
+print(f'  Dataset  : {DATASET_PATH}')
+print(f'  Sample   : {cap_label}  |  benign={n_benign:,}  phishing={n_phish:,}')
+print(f'  Labels   : 0=benign  1=phishing')
+print('=' * 76)
+sys.stdout.flush()
+
+# ── Step 2: Run pipeline on shuffled sample ───────────────────────────────────
+def _is_threat(verdict):
+    return verdict in ('MALICIOUS', 'WARNING', 'BLOCKED')
+
+tp = tn = fp = fn = skipped = 0
+err_fp, err_fn = [], []
+pred_counts = {'SAFE': 0, 'WARNING': 0, 'MALICIOUS': 0, 'BLOCKED': 0}
+gt_counts   = {'SAFE': 0, 'MALICIOUS': 0}
+t_start = time.perf_counter()
+
+for i, (url, lbl) in enumerate(all_rows):
+    true_lbl = 'SAFE' if lbl == 0 else 'MALICIOUS'
+    try:
+        result  = _scan(url)
+        verdict = result['verdict']
+    except Exception:
+        skipped += 1
+        continue
+    predicted_threat = _is_threat(verdict)
+    actual_threat    = (true_lbl == 'MALICIOUS')
+    if actual_threat and predicted_threat:     tp += 1
+    elif not actual_threat and not predicted_threat: tn += 1
+    elif not actual_threat and predicted_threat:
+        fp += 1
+        if len(err_fp) < MAX_ERRORS_SHOWN:
+            err_fp.append(f'    FP  {verdict:<10}  {url[:80]}')
+    else:
+        fn += 1
+        if len(err_fn) < MAX_ERRORS_SHOWN:
+            err_fn.append(f'    FN  {verdict:<10}  {url[:80]}')
+    if verdict in pred_counts: pred_counts[verdict] += 1
+    gt_counts[true_lbl] += 1
+    total = i + 1
+    if total % REPORT_EVERY == 0:
+        el   = time.perf_counter() - t_start
+        rate = total / el if el > 0 else 1
+        eta  = (n_total - total) / rate / 60
+        acc  = (tp + tn) / total * 100
+        print(f'  {total:>8,} / {n_total:,}  |  acc={acc:5.1f}%  '
+              f'TP={tp:,} TN={tn:,} FP={fp:,} FN={fn:,}  '
+              f'{rate:.0f} URLs/s  ETA {eta:.1f} min')
+        sys.stdout.flush()
+
+elapsed     = time.perf_counter() - t_start
+total_valid = tp + tn + fp + fn
+n_ben_eval  = tn + fp
+n_mal_eval  = tp + fn
+accuracy    = (tp + tn) / total_valid * 100         if total_valid         else 0
+precision   = tp / (tp + fp) * 100                 if (tp + fp)           else 0
+recall      = tp / (tp + fn) * 100                 if (tp + fn)           else 0
+f1          = 2*precision*recall/(precision+recall) if (precision+recall)  else 0
+fpr         = fp / (fp + tn) * 100                 if (fp + tn)           else 0
+fnr         = fn / (fn + tp) * 100                 if (fn + tp)           else 0
+specificity = tn / (tn + fp) * 100                 if (tn + fp)           else 0
+
+W = 76
+print()
+print('=' * W)
+print('  CONFUSION MATRIX  (binary: SAFE vs THREAT)')
+print(f"  {'':14}  {'Predicted SAFE':>20}  {'Predicted THREAT':>20}")
+print(f"  {'Actual BENIGN':14}  {'TN = '+str(tn):>20}  {'FP = '+str(fp):>20}")
+print(f"  {'Actual PHISHING':14}  {'FN = '+str(fn):>20}  {'TP = '+str(tp):>20}")
+print('=' * W)
+print()
+print('  METRICS')
+print(f'  Sample      : {total_valid:,} URLs  ({n_ben_eval:,} benign  +  {n_mal_eval:,} phishing)')
+print(f'  Skipped     : {skipped:,} rows')
+print(f'  Time        : {elapsed:.1f} s  ({total_valid/elapsed:.0f} URLs/s)')
+print()
+print(f'  Accuracy    : {accuracy:6.2f}%')
+print(f'  Precision   : {precision:6.2f}%   (of URLs flagged THREAT, how many truly are)')
+print(f'  Recall      : {recall:6.2f}%   (of real threats, how many were caught)')
+print(f'  Specificity : {specificity:6.2f}%   (of real benign URLs, how many correctly passed)')
+print(f'  F1 Score    : {f1:6.2f}%')
+print(f'  FP Rate     : {fpr:6.2f}%   ({fp:,} benign URLs over-flagged as threat)')
+print(f'  FN Rate     : {fnr:6.2f}%   ({fn:,} phishing URLs missed -- shown as SAFE)')
+print()
+if err_fn:
+    print(f'  FALSE NEGATIVES -- missed phishing (first {len(err_fn)} shown):')
+    for e in err_fn: print(e)
+    print()
+if err_fp:
+    print(f'  FALSE POSITIVES -- benign URLs over-flagged (first {len(err_fp)} shown):')
+    for e in err_fp: print(e)
+    print()
+print('  Legend : TP=phishing caught  TN=benign passed  FP=over-flagged  FN=missed')
+print('  Note   : WARNING and BLOCKED verdicts count as THREAT in all binary metrics.')
+print('=' * W)
+
+# ── Plot ──────────────────────────────────────────────────────────────────────
+plt.style.use('dark_background')
+fig, axes = plt.subplots(1, 3, figsize=(16, 5))
+fig.patch.set_facecolor('#1e1e2e')
+for ax in axes: ax.set_facecolor('#1e1e2e')
+
+fig.suptitle(
+    f'SafeLink ML Pipeline -- {total_valid:,} URLs (shuffled sample)\n'
+    f'Accuracy {accuracy:.1f}%  |  Recall {recall:.1f}%  |  F1 {f1:.1f}%  |  FP Rate {fpr:.1f}%',
+    fontsize=11, color='white', fontweight='bold', y=1.01)
+
+# Panel 1: Confusion Matrix
+ax1 = axes[0]
+cell_colors = [['#aed6f1', '#f1948a'], ['#f1948a', '#1a5276']]
+cm_vals = [[tn, fp], [fn, tp]]
+cm_lbl  = [['TN', 'FP'], ['FN', 'TP']]
+for r in range(2):
+    for c in range(2):
+        ax1.add_patch(plt.Rectangle((c, 1-r), 1, 1, color=cell_colors[r][c]))
+        lbl = cm_lbl[r][c]
+        val = cm_vals[r][c]
+        col = '#145a32' if lbl == 'TN' else ('#7b241c' if lbl in ('FP','FN') else '#abebc6')
+        ax1.text(c+0.5, 1-r+0.62, lbl, ha='center', va='center',
+                 fontsize=15, fontweight='bold', color=col)
+        ax1.text(c+0.5, 1-r+0.3, f'{val:,}', ha='center', va='center',
+                 fontsize=12, fontweight='bold', color=col)
+ax1.set_xlim(0,2); ax1.set_ylim(0,2)
+ax1.set_xticks([0.5,1.5])
+ax1.set_xticklabels(['Predicted\nSAFE','Predicted\nTHREAT'], color='white', fontsize=9)
+ax1.set_yticks([0.5,1.5])
+ax1.set_yticklabels(['Actual\nPHISHING','Actual\nBENIGN'], color='white', fontsize=9)
+ax1.tick_params(length=0)
+ax1.set_title('Confusion Matrix', color='white', fontweight='bold', pad=10)
+for spine in ax1.spines.values(): spine.set_visible(False)
+
+# Panel 2: Performance Metrics
+ax2  = axes[1]
+names= ['Accuracy','Precision','Recall','F1 Score']
+vals = [accuracy, precision, recall, f1]
+cols = ['#1f77b4','#2ca02c','#17becf','#ff7f0e']
+bars = ax2.bar(names, vals, color=cols, width=0.55, zorder=3)
+ax2.axhline(90, color='white', linestyle='--', linewidth=0.8, alpha=0.5)
+ax2.text(3.4, 91, '90%', color='white', fontsize=7, alpha=0.7)
+for bar, val in zip(bars, vals):
+    ax2.text(bar.get_x()+bar.get_width()/2, bar.get_height()+0.8,
+             f'{val:.1f}%', ha='center', va='bottom', fontsize=9,
+             fontweight='bold', color='white')
+ax2.set_ylim(0,110)
+ax2.set_ylabel('Score (%)', color='white', fontsize=9)
+ax2.tick_params(colors='white', labelsize=8)
+ax2.set_title('Performance Metrics', color='white', fontweight='bold', pad=10)
+ax2.yaxis.grid(True, linestyle='--', alpha=0.3, zorder=0)
+ax2.set_axisbelow(True)
+for sp in ['top','right']: ax2.spines[sp].set_visible(False)
+for sp in ['bottom','left']: ax2.spines[sp].set_color('#555555')
+
+# Panel 3: Verdict Distribution
+ax3      = axes[2]
+verdicts = ['SAFE','WARNING','MALICIOUS','BLOCKED']
+pred_v   = [pred_counts[v] for v in verdicts]
+gt_v     = [gt_counts.get(v,0) for v in verdicts]
+x        = np.arange(len(verdicts))
+w        = 0.35
+b1 = ax3.bar(x-w/2, pred_v, w, label='Predicted',    color='#2ecc71', zorder=3)
+b2 = ax3.bar(x+w/2, gt_v,   w, label='Ground Truth', color='#a9dfbf', zorder=3)
+max_h = max(pred_v+gt_v) if max(pred_v+gt_v)>0 else 1
+for bar in list(b1)+list(b2):
+    h = bar.get_height()
+    if h > 0:
+        ax3.text(bar.get_x()+bar.get_width()/2, h+max_h*0.01,
+                 f'{h:,}', ha='center', va='bottom', fontsize=7, color='white')
+ax3.set_xticks(x)
+ax3.set_xticklabels(verdicts, color='white', fontsize=8)
+ax3.set_ylabel('Count', color='white', fontsize=9)
+ax3.tick_params(colors='white', labelsize=8)
+ax3.set_title('Verdict Distribution', color='white', fontweight='bold', pad=10)
+ax3.legend(fontsize=8, facecolor='#2a2a3e', labelcolor='white', framealpha=0.8)
+ax3.yaxis.grid(True, linestyle='--', alpha=0.3, zorder=0)
+ax3.set_axisbelow(True)
+for sp in ['top','right']: ax3.spines[sp].set_visible(False)
+for sp in ['bottom','left']: ax3.spines[sp].set_color('#555555')
+
+plt.tight_layout()
+plt.savefig(PLOT_OUTPUT, dpi=150, bbox_inches='tight', facecolor=fig.get_facecolor())
+plt.show()
+print(f'Saved -> {PLOT_OUTPUT}')
+
+
+
+//___________

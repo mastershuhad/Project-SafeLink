@@ -10,8 +10,6 @@ import com.safelink.ml.URLBertClassifier
 import com.safelink.network.BlocklistLoader
 import com.safelink.network.DynamicWhitelist
 import com.safelink.network.GeminiClient
-import com.safelink.network.GoogleSafeBrowsingClient
-import com.safelink.network.RDAPClient
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -33,8 +31,6 @@ class App : Application() {
         lateinit var classifier: SafeLinkClassifier
 
         // Network clients (shared instances)
-        lateinit var rdapClient: RDAPClient
-        lateinit var gsbClient: GoogleSafeBrowsingClient
         lateinit var geminiClient: GeminiClient
         lateinit var dynamicWhitelist: DynamicWhitelist
 
@@ -43,6 +39,7 @@ class App : Application() {
         @Volatile var autoencoderDetector: AutoencoderDetector? = null
 
         @Volatile var modelsReady = false
+        @Volatile var coreAssetsReady = false
         @Volatile var modelsFailed = false
         @Volatile var protectionEnabled = true
     }
@@ -57,8 +54,6 @@ class App : Application() {
         protectionEnabled = prefs.getBoolean("protection_enabled", true)
 
         // Initialize shared clients
-        rdapClient = RDAPClient()
-        gsbClient = GoogleSafeBrowsingClient()
         geminiClient = GeminiClient()
         dynamicWhitelist = DynamicWhitelist(this)
 
@@ -83,6 +78,8 @@ class App : Application() {
             knowledgeHub = KnowledgeHubStore(applicationContext)
             android.util.Log.e("SafeLink/Init", "KnowledgeHub load failed: ${t.message}", t)
         }
+        
+        coreAssetsReady = true
 
         // ── Critical models (CNN + scaler) ────────────────────────
         try {

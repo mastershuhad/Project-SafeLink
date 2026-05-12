@@ -32,8 +32,6 @@ class InterceptActivity : AppCompatActivity() {
         lifecycleScope.launch {
             val predictor = SafeLinkPredictor(
                 networkChecker = NetworkChecker(this@InterceptActivity),
-                rdapClient = App.rdapClient,
-                gsbClient = App.gsbClient,
                 geminiClient = App.geminiClient,
                 dynamicWhitelist = App.dynamicWhitelist,
             )
@@ -67,7 +65,7 @@ class InterceptActivity : AppCompatActivity() {
                     }
                 )
                 else -> startActivity(
-                    Intent(this@InterceptActivity, VerdictPopupActivity::class.java).apply {
+                    Intent(this@InterceptActivity, VerdictComposeActivity::class.java).apply {
                         addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                         putExtra("url", url)
                         putExtra("verdict", result.verdict.name)

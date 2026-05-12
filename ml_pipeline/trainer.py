@@ -17,8 +17,10 @@ import os
 import json
 import numpy as np
 import pandas as pd
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import train_test_split, GroupShuffleSplit
 from sklearn.preprocessing import StandardScaler
+from urllib.parse import urlparse
+import re
 from sklearn.metrics import classification_report, confusion_matrix
 import tensorflow as tf
 from tensorflow import keras
@@ -114,12 +116,29 @@ def main():
     y = df['label'].values.astype(np.int32)
 
     # --- Train/val/test split ---
-    (X_seq_train, X_seq_tmp, X_num_train, X_num_tmp, y_train, y_tmp) = train_test_split(
-        X_seq, X_num, y, test_size=0.2, random_state=RANDOM_SEED, stratify=y
-    )
-    (X_seq_val, X_seq_test, X_num_val, X_num_test, y_val, y_test) = train_test_split(
-        X_seq_tmp, X_num_tmp, y_tmp, test_size=0.5, random_state=RANDOM_SEED, stratify=y_tmp
-    )
+    print("[SPLIT] Extracting domains for GroupShuffleSplit ...")
+    def get_host(u):
+        try:
+            h = urlparse(u if '://' in u else 'http://' + u).netloc.split(':')[0].lower()
+            return re.sub(r'^www\.', '', h)
+        except Exception:
+            return u
+    groups = np.array([get_host(str(u)) for u in df['url']])
+
+    gss1 = GroupShuffleSplit(n_splits=1, test_size=0.2, random_state=RANDOM_SEED)
+    train_idx, tmp_idx = next(gss1.split(X_seq, y, groups))
+
+    X_seq_train, X_seq_tmp = X_seq[train_idx], X_seq[tmp_idx]
+    X_num_train, X_num_tmp = X_num[train_idx], X_num[tmp_idx]
+    y_train, y_tmp = y[train_idx], y[tmp_idx]
+    groups_tmp = groups[tmp_idx]
+
+    gss2 = GroupShuffleSplit(n_splits=1, test_size=0.5, random_state=RANDOM_SEED)
+    val_idx, test_idx = next(gss2.split(X_seq_tmp, y_tmp, groups_tmp))
+
+    X_seq_val, X_seq_test = X_seq_tmp[val_idx], X_seq_tmp[test_idx]
+    X_num_val, X_num_test = X_num_tmp[val_idx], X_num_tmp[test_idx]
+    y_val, y_test = y_tmp[val_idx], y_tmp[test_idx]
     print(f"[SPLIT] Train: {len(y_train):,}  Val: {len(y_val):,}  Test: {len(y_test):,}")
 
     # --- Fit scaler on TRAINING set only ---

@@ -96,19 +96,14 @@ def main():
         scaler_params = json.load(f)
     assert scaler_params['n_features'] == 36, "Scaler n_features must be 36"
 
-    # Reconstruct scaler from saved params
-    scaler = StandardScaler()
-    scaler.mean_ = np.array(scaler_params['mean'])
-    scaler.scale_ = np.array(scaler_params['scale'])
-    scaler.var_ = scaler.scale_ ** 2
-    scaler.n_features_in_ = 36
-    scaler.n_samples_seen_ = 1  # dummy
+    mean_ = np.array(scaler_params['mean']).astype(np.float32)
+    scale_ = np.array(scaler_params['scale']).astype(np.float32)
 
     # --- Extract and scale features ---
     X = benign_df[FEATURE_COLUMNS].values.astype(np.float32)
     url_lengths = benign_df[URL_LENGTH_COL].values
 
-    X_scaled = scaler.transform(X).astype(np.float32)
+    X_scaled = ((X - mean_) / scale_).astype(np.float32)
 
     # --- Train/val split (stratified by length category) ---
     from sklearn.model_selection import train_test_split

@@ -100,8 +100,6 @@ class ManualTestActivity : AppCompatActivity() {
         lifecycleScope.launch {
             val predictor = SafeLinkPredictor(
                 networkChecker   = NetworkChecker(this@ManualTestActivity),
-                rdapClient       = App.rdapClient,
-                gsbClient        = App.gsbClient,
                 geminiClient     = App.geminiClient,
                 dynamicWhitelist = App.dynamicWhitelist,
             )

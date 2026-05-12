@@ -36,14 +36,7 @@ CHUNK_SIZE = 5000
 
 
 def _load_malicious_phish() -> pd.DataFrame:
-    # Accept both possible filenames
-    for name in ['malicious_phish 2021 .csv', 'malicious_phish_2021.csv', 'malicious_phish.csv']:
-        candidate = os.path.join(DATA_DIR, name)
-        if os.path.exists(candidate):
-            path = candidate
-            break
-    else:
-        path = os.path.join(DATA_DIR, 'malicious_phish_2021.csv')
+    path = os.path.join(DATA_DIR, 'malicious_phish_2021.csv')
     if not os.path.exists(path):
         print(f"[SKIP] {path} not found")
         return pd.DataFrame()
@@ -109,13 +102,21 @@ def _load_phishtank_openphish() -> pd.DataFrame:
 
 
 def _load_tranco() -> pd.DataFrame:
+    import random
     path = os.path.join(DATA_DIR, 'tranco_top1m.csv')
     if not os.path.exists(path):
         print(f"[SKIP] {path} not found")
         return pd.DataFrame()
     df = pd.read_csv(path, header=None, names=['rank', 'domain'], low_memory=False)
     df = df.head(10000)
-    df['url'] = 'https://' + df['domain']
+    
+    # Data Augmentation: Force a trailing slash on ALL Tranco domains.
+    # This teaches the CNN that a trailing slash is the normal baseline for safe URLs.
+    def augment_url(domain):
+        base = 'https://' + domain + '/'
+        return base
+
+    df['url'] = df['domain'].apply(augment_url)
     df['label'] = 0
     df['source'] = 'tranco'
     print(f"[LOAD] Tranco: {len(df):,} rows")

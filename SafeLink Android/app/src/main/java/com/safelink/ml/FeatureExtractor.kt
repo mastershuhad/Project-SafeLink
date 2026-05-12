@@ -29,11 +29,12 @@ object FeatureExtractor {
     )
 
     private val BRAND_KEYWORDS = setOf(
-        "hnb", "sampath", "boc", "commercial", "dialog", "mobitel", "slt",
+        "hnb", "sampath", "boc", "combank", "commercial", "dialog", "mobitel", "slt",
         "peoples", "bank", "lankabell",
         "paypal", "amazon", "google", "facebook", "apple", "microsoft",
         "netflix", "instagram", "whatsapp", "dhl", "ebay", "linkedin",
         "twitter", "youtube", "dropbox", "adobe", "office", "outlook",
+        "icloud", "appleid", "itunes", "appstore",
     )
 
     private val URL_SHORTENERS = setOf(
@@ -42,7 +43,7 @@ object FeatureExtractor {
     )
 
     private val TLD_IN_PATH_REGEX = Regex(
-        """\.(com|net|org|gov|edu|bank|secure|login)\b""", RegexOption.IGNORE_CASE
+        """/(?:[a-zA-Z0-9-]+\.)+(com|net|org|gov|edu|bank|secure|login)(?:/|$)""", RegexOption.IGNORE_CASE
     )
 
     private val DIGIT_RUN_REGEX = Regex("""\d+""")
@@ -91,18 +92,33 @@ object FeatureExtractor {
         f[20] = if (tld in SUSPICIOUS_TLDS) 1f else 0f       // has_suspicious_tld
         f[21] = if (tld in TRUSTED_TLDS) 1f else 0f          // has_trusted_tld
 
-        // Tokenize the URL for keyword matching
-        val words = url.lowercase()
-            .replace('/', ' ')
-            .replace('-', ' ')
-            .replace('_', ' ')
-            .replace('.', ' ')
+        // Phishing keyword scope: hyphen-connected host segments + full path/query.
+        // Dot-separated subdomains (e.g. 'login' in login.bank.com) are excluded —
+        // only hyphens in a hostname indicate deliberate keyword stuffing.
+        val hostHyphenWords = host.split('.').flatMap { seg ->
+            if ('-' in seg) seg.lowercase().split('-').filter { it.isNotEmpty() }
+            else emptyList()
+        }.toSet()
+        val pathQueryWords = (path + " " + query).lowercase()
             .split(Regex("\\W+"))
+            .filter { it.isNotEmpty() }
             .toSet()
+        val words = hostHyphenWords + pathQueryWords
 
         f[22] = (PHISHING_KEYWORDS intersect words).size.toFloat()  // phishing_keyword_count
-        f[23] = (BRAND_KEYWORDS intersect words).size.toFloat()     // brand_keyword_count
-        f[24] = if (URL_SHORTENERS.any { it in host }) 1f else 0f   // has_url_shortener
+
+        // Brand keywords scan only host segments (dot AND hyphen split) — NOT path/query.
+        // TLD substitution (combank.net impersonating combank.lk) puts the brand name in
+        // the SLD with no hyphens, so all dot-separated host segments must be checked.
+        // Excluding path/query avoids false positives on legitimate URLs that mention brand
+        // names in content paths (e.g. discuss.python.org/google-sheets-api/).
+        val allHostWords = host.split('.').flatMap { seg ->
+            val lower = seg.lowercase()
+            if ('-' in lower) listOf(lower) + lower.split('-').filter { it.isNotEmpty() }
+            else listOf(lower)
+        }.toSet()
+        f[23] = (BRAND_KEYWORDS intersect allHostWords).size.toFloat()  // brand_keyword_count
+        f[24] = if (URL_SHORTENERS.any { host == it || host.endsWith(".$it") }) 1f else 0f   // has_url_shortener
 
         f[25] = (uri?.queryParameterNames?.size ?: 0).toFloat()     // num_query_params
         f[26] = if (uri?.encodedAuthority?.contains(':') == true) 1f else 0f  // has_port_in_url

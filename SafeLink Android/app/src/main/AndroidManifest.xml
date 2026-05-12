@@ -4,7 +4,6 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
-    <!-- Required to list installed browsers on Android 11+ -->
     <queries>
         <intent>
             <action android:name="android.intent.action.VIEW" />
@@ -25,9 +24,9 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.SafeLink">
 
-        <!-- Main entry point -->
+        <!-- Main entry point (Compose) -->
         <activity
-            android:name=".ui.MainActivity"
+            android:name=".ui.MainComposeActivity"
             android:exported="true"
             android:windowSoftInputMode="adjustResize">
             <intent-filter>
@@ -35,11 +34,6 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-
-        <!-- First-launch setup screen -->
-        <activity
-            android:name=".ui.SetupActivity"
-            android:exported="false" />
 
         <!-- Intercepts http/https links when SafeLink is the default browser -->
         <activity
@@ -58,38 +52,20 @@
             </intent-filter>
         </activity>
 
-        <!-- Verdict popup — translucent overlay -->
+        <!-- Verdict popup — translucent overlay (Compose) -->
         <activity
-            android:name=".ui.VerdictPopupActivity"
+            android:name=".ui.VerdictComposeActivity"
             android:excludeFromRecents="true"
             android:exported="false"
             android:theme="@style/Theme.SafeLink.Translucent"
             android:windowSoftInputMode="stateHidden" />
 
-        <!-- No internet popup -->
+        <!-- No internet popup (Compose) -->
         <activity
             android:name=".ui.NoInternetPopupActivity"
             android:excludeFromRecents="true"
             android:exported="false"
             android:theme="@style/Theme.SafeLink.Translucent" />
-
-        <!-- Manual URL tester -->
-        <activity
-            android:name=".ui.ManualTestActivity"
-            android:exported="false"
-            android:parentActivityName=".ui.MainActivity" />
-
-        <!-- Scan history -->
-        <activity
-            android:name=".ui.ScanHistoryActivity"
-            android:exported="false"
-            android:parentActivityName=".ui.MainActivity" />
-
-        <!-- Scan detail -->
-        <activity
-            android:name=".ui.ScanDetailActivity"
-            android:exported="false"
-            android:parentActivityName=".ui.ScanHistoryActivity" />
 
     </application>
 

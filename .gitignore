@@ -22,6 +22,11 @@ venv_train/
 *_venv/
 *_env/
 
+# Large / potentially sensitive dataset files (exclude from git)
+Datasets/test.csv
+Datasets/test\ Dataset.csv
+Datasets/test\ *.csv
+
 # Large generated data (reproducible via ml_pipeline)
 ml_pipeline/data/
 

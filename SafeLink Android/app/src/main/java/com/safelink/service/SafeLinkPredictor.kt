@@ -11,16 +11,13 @@ import com.safelink.ml.XAIEngine
 import com.safelink.ml.XAIResult
 import com.safelink.network.DynamicWhitelist
 import com.safelink.network.GeminiClient
-import com.safelink.network.GoogleSafeBrowsingClient
 import com.safelink.network.NetworkChecker
 import com.safelink.network.NetworkUrlEvaluator
-import com.safelink.network.RDAPClient
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
-import kotlinx.coroutines.withTimeoutOrNull
 
 data class PredictionResult(
     val verdict: Verdict,
@@ -46,8 +43,6 @@ data class PredictionResult(
  */
 class SafeLinkPredictor(
     private val networkChecker: NetworkChecker,
-    private val rdapClient: RDAPClient,
-    private val gsbClient: GoogleSafeBrowsingClient,
     private val geminiClient: GeminiClient,
     private val dynamicWhitelist: DynamicWhitelist,
 ) {
@@ -76,6 +71,16 @@ class SafeLinkPredictor(
     )
 
     suspend fun predict(url: String): PredictionResult = withContext(Dispatchers.Default) {
+
+        // Ensure critical core assets (blocklist/whitelist/hub) are loaded
+        if (!App.coreAssetsReady) {
+            var waited = 0
+            // Core assets are usually loaded in <1s
+            while (!App.coreAssetsReady && waited < 5_000) {
+                delay(100)
+                waited += 100
+            }
+        }
 
         // --- L0: Hard blocks ---
 
@@ -115,20 +120,8 @@ class SafeLinkPredictor(
 
         // --- L1: Trust fast paths ---
 
-        // Static whitelist — GSB still runs to catch compromised whitelisted domains
+        // Static whitelist
         if (host != null && (App.whitelist.contains(host) || App.whitelist.any { wl -> host.endsWith(".$wl") })) {
-            val gsbFlagged = withContext(Dispatchers.IO) { gsbClient.isMalicious(url) }
-            if (gsbFlagged == true) {
-                return@withContext PredictionResult(
-                    verdict = Verdict.MALICIOUS,
-                    confidence = 1f,
-                    primaryReason = "This website is on your trusted list but Google has flagged it as dangerous — it may have been compromised",
-                    allReasons = listOf("Whitelisted domain flagged by Google Safe Browsing"),
-                    geminiExplanation = "",
-                    cnnScore = 0f, bertScore = 0f, anomalyMse = 0f,
-                    domainAgeDays = -1f, layer = "L1-WHITELIST-GSB", matchedBrand = null,
-                )
-            }
             return@withContext safe(url, "This website is on the trusted list", "L1-WHITELIST")
         }
 
@@ -191,16 +184,10 @@ class SafeLinkPredictor(
 
         // Extract raw features
         val rawFeatures = FeatureExtractor.extract(url)
+        val domainAgeDays = -1f  // RDAP removed — domain age not used
 
-        // Launch RDAP and CNN in parallel
-        val rdapDeferred: Deferred<Float> = async(Dispatchers.IO) {
-            withTimeoutOrNull(4_000L) {
-                rdapClient.getDomainAgeDays(url)
-            } ?: -1f
-        }
-
+        // Launch CNN and Autoencoder in parallel
         val cnnDeferred: Deferred<FloatArray> = async(Dispatchers.Default) {
-            // Fill domain_age_days = -1f for now (RDAP result applied below)
             val scaledFeatures = App.featureScaler.scale(rawFeatures)
             val seqInput = UrlTokenizer.encode(url)
             App.classifier.classify(seqInput, scaledFeatures)
@@ -217,28 +204,72 @@ class SafeLinkPredictor(
         }
 
         // URLBert runs sequentially (heavier model, ~80-150ms)
+        // Strip trailing slash before tokenizing — URLBert tokenizer is sensitive to it
+        // and produces wildly different scores for "example.com/" vs "example.com"
         val bertScore = withContext(Dispatchers.Default) {
-            App.bertClassifier?.classify(url) ?: 0.5f
+            App.bertClassifier?.classify(url.trimEnd('/')) ?: 0.5f
         }
 
-        // Wait for parallel results
-        val domainAgeDays = rdapDeferred.await()
         val cnnProbs = cnnDeferred.await()
         val anomalyResult = aeDeferred.await()
 
-        // Re-scale with actual domain age if RDAP succeeded
-        val finalScaledFeatures = if (domainAgeDays >= 0f) {
-            rawFeatures[35] = domainAgeDays
-            App.featureScaler.scale(rawFeatures)
-        } else {
-            App.featureScaler.scale(rawFeatures)
+        // Fusion — pass rawFeatures to enable Option A feature-nullity gate
+        var fusion = contextAdjust(url, rawFeatures, FusionEngine.fuse(cnnProbs, bertScore, anomalyResult, rawFeatures))
+
+        // Option E: Structural Risk post-fusion cap
+        // MALICIOUS but structural_risk == 0  → SAFE  (models fired on character/token patterns
+        //   only — no concrete phishing features: no hyphens+keywords, no suspicious TLD,
+        //   no brand SLD, no shortener, no IP, no @ sign).  Product slugs (xiaomi-15-5g),
+        //   tech paths, and SPA fragments land here.
+        // MALICIOUS but 0 < structural_risk < STRUCTURAL_RISK_MIN  → WARNING (minimal evidence).
+        val structRisk = FusionEngine.structuralRisk(rawFeatures)
+        if (fusion.verdict == Verdict.MALICIOUS && structRisk < FusionEngine.STRUCTURAL_RISK_MIN) {
+            fusion = if (structRisk == 0f) {
+                fusion.copy(
+                    verdict = Verdict.SAFE,
+                    confidence = 0.60f,
+                    reason = "${fusion.reason} → SAFE (structural_risk=0, pattern-only signal)",
+                )
+            } else {
+                fusion.copy(
+                    verdict = Verdict.WARNING,
+                    confidence = 0.65f,
+                    reason = "${fusion.reason} → WARNING (structural_risk=${String.format("%.2f", structRisk)}, minimal evidence)",
+                )
+            }
         }
 
-        // Fusion
-        val fusion = contextAdjust(url, rawFeatures, FusionEngine.fuse(cnnProbs, bertScore, anomalyResult))
+        // ── Confidence gate ────────────────────────────────────────────────────
+        // MALICIOUS is reserved for L0-blocklist hits and very high-confidence
+        // predictions (≥ 90%).  Below the threshold the verdict is downgraded to
+        // WARNING so the user is alerted but not shown an overly alarming verdict.
+        // Gemini explanation will fire automatically because verdict == WARNING.
+        if (fusion.verdict == Verdict.MALICIOUS &&
+            fusion.confidence < FusionEngine.MALICIOUS_CONFIDENCE_THRESHOLD
+        ) {
+            fusion = fusion.copy(
+                verdict = Verdict.WARNING,
+                reason  = "${fusion.reason} → WARNING (conf ${(fusion.confidence * 100).toInt()}% < 90% threshold)",
+            )
+        }
 
         // XAI
-        val xai = XAIEngine.explain(rawFeatures, App.knowledgeHub, url, fusion.verdict)
+        val rawXai = XAIEngine.explain(rawFeatures, App.knowledgeHub, url, fusion.verdict)
+
+        // For user-hosting platform WARNINGs, replace the generic feature reason with a
+        // plain-language explanation that tells the user WHY this platform is risky.
+        val userHostedPlatform = if (fusion.verdict == Verdict.WARNING && host != null) {
+            USER_HOSTED_PLATFORMS.firstOrNull { p -> host != p && host.endsWith(".$p") }
+        } else null
+        val xai = if (userHostedPlatform != null) {
+            val r = "This link is on $userHostedPlatform — a free hosting service where anyone " +
+                    "can create pages, including scammers. Only open it if you trust who shared it."
+            rawXai.copy(
+                primaryReason = r,
+                allReasons = listOf(r) + rawXai.allReasons.take(2),
+                geminiContext = "User-hosting platform: $userHostedPlatform. Content is user-generated. ${rawXai.geminiContext}",
+            )
+        } else rawXai
 
         // Gemini — only on WARNING
         val geminiExplanation = if (fusion.verdict == Verdict.WARNING) {
@@ -247,32 +278,13 @@ class SafeLinkPredictor(
             }
         } else ""
 
-        // GSB — only on SAFE (conserve API quota)
-        val finalVerdict: Verdict
-        val finalLayer: String
-        if (fusion.verdict == Verdict.SAFE) {
-            val gsbFlagged = withContext(Dispatchers.IO) {
-                gsbClient.isMalicious(url)
-            }
-            if (gsbFlagged == true) {
-                finalVerdict = Verdict.MALICIOUS
-                finalLayer = "L2-GSB"
-            } else {
-                finalVerdict = Verdict.SAFE
-                finalLayer = "L2-ML"
-            }
-        } else {
-            finalVerdict = fusion.verdict
-            finalLayer = "L2-ML"
-        }
-
         // --- L3: Auto-trust promotion ---
-        if (finalVerdict == Verdict.SAFE && fusion.confidence > 0.90f && host != null) {
+        if (fusion.verdict == Verdict.SAFE && fusion.confidence > 0.90f && host != null) {
             dynamicWhitelist.recordSafeScan(host, fusion.confidence)
         }
 
         PredictionResult(
-            verdict = finalVerdict,
+            verdict = fusion.verdict,
             confidence = fusion.confidence,
             primaryReason = xai.primaryReason,
             allReasons = xai.allReasons,
@@ -281,7 +293,7 @@ class SafeLinkPredictor(
             bertScore = fusion.bertScore,
             anomalyMse = fusion.anomalyMse,
             domainAgeDays = domainAgeDays,
-            layer = finalLayer,
+            layer = "L2-ML",
             matchedBrand = xai.matchedBrand,
         )
     }
@@ -312,35 +324,43 @@ class SafeLinkPredictor(
     }
 
     private fun contextAdjust(url: String, rawFeatures: FloatArray, fusion: FusionResult): FusionResult {
-        if (fusion.verdict != Verdict.MALICIOUS) return fusion
+        val host = extractHost(url)
 
-        val host = extractHost(url) ?: return fusion
+        // User-hosting platform subdomains: cap SAFE/WARNING to WARNING — anyone can publish here
+        if (host != null) {
+            val platform = USER_HOSTED_PLATFORMS.firstOrNull { p -> host != p && host.endsWith(".$p") }
+            if (platform != null && (fusion.verdict == Verdict.SAFE || fusion.verdict == Verdict.WARNING)) {
+                return fusion.copy(
+                    verdict = Verdict.WARNING,
+                    confidence = maxOf(fusion.confidence, 0.60f),
+                    reason = "${fusion.reason} → user-hosting platform ($platform): content is user-generated",
+                )
+            }
+        }
+
+        if (fusion.verdict != Verdict.MALICIOUS) return fusion
+        if (host == null) return fusion
+
         val path = extractPath(url).lowercase()
 
-        // Option 1: user-hosting platform — model bias runs high against these domains
+        // User-hosting platform — model bias runs high against these domains
         val isHostedPlatform = USER_HOSTED_PLATFORMS.any { p -> host == p || host.endsWith(".$p") }
 
-        // Option 2: safe path words — only downgrade when NO phishing keywords are also present
-        // (prevents attackers gaming it with /portfolio/login-verify)
+        // Safe path words — only downgrade when NO phishing keywords are also present
         val phishingKwCount = rawFeatures.getOrElse(22) { 0f }
         val pathWords = path.split("/", "-", "_", ".").toSet()
         val hasSafePathWord = phishingKwCount == 0f && SAFE_PATH_WORDS.intersect(pathWords).isNotEmpty()
 
         if (!isHostedPlatform && !hasSafePathWord) return fusion
 
-        // Skip the cap when anomaly is very high — the autoencoder has detected a genuine
-        // structural anomaly that strongly overrides the platform-bias heuristic.
-        if (fusion.anomalyMse > 0.10f) return fusion
+        val tags = mutableListOf<String>()
+        if (isHostedPlatform) tags.add("user-hosting platform")
+        if (hasSafePathWord) tags.add("safe path word")
 
-        val tag = buildString {
-            if (isHostedPlatform) append("user-hosting platform")
-            if (isHostedPlatform && hasSafePathWord) append(" + ")
-            if (hasSafePathWord) append("safe path word")
-        }
         return fusion.copy(
             verdict = Verdict.WARNING,
             confidence = 0.60f,
-            reason = "${fusion.reason} → capped to WARNING ($tag)",
+            reason = "${fusion.reason} → capped to WARNING (${tags.joinToString(", ")})",
         )
     }
 

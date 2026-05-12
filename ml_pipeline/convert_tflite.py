@@ -70,8 +70,8 @@ def main():
     out_exp  = export_model.predict({'seq_input': rng_seq, 'num_input': rng_num}, verbose=0)
     max_diff = float(np.max(np.abs(out_orig - out_exp)))
     print(f"[CHECK]  Max output diff Keras3 vs tf_keras: {max_diff:.6f}  (should be ~0)")
-    if max_diff > 0.01:
-        print("[WARN]   Large diff — weight copy may have failed!")
+    if max_diff > 1e-3:
+        raise ValueError(f"Large divergence between Keras 3 and TFLite output: {max_diff}. Weight copy may have failed.")
 
     print("\n[TFLITE] Converting tf_keras model (dynamic range quantization) ...")
     converter = tf.lite.TFLiteConverter.from_keras_model(export_model)

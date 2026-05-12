@@ -19,7 +19,7 @@ abstract class SafeLinkDatabase : RoomDatabase() {
                     context.applicationContext,
                     SafeLinkDatabase::class.java,
                     "safelink.db",
-                ).build().also { INSTANCE = it }
+                ).fallbackToDestructiveMigration().build().also { INSTANCE = it }
             }
         }
     }

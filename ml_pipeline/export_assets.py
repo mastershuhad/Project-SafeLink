@@ -11,7 +11,7 @@ import shutil
 import sys
 
 MODELS_DIR = 'models'
-ANDROID_ASSETS_DIR = '../android/app/src/main/assets'
+ANDROID_ASSETS_DIR = '../SafeLink Android/app/src/main/assets'
 
 # (filename, max_size_kb, required)
 ASSET_SPECS = [

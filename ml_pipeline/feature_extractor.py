@@ -31,12 +31,14 @@ PHISHING_KEYWORDS = {
 
 BRAND_KEYWORDS = {
     # Sri Lankan
-    'hnb', 'sampath', 'boc', 'commercial', 'dialog', 'mobitel', 'slt',
+    'hnb', 'sampath', 'boc', 'combank', 'commercial', 'dialog', 'mobitel', 'slt',
     'peoples', 'bank', 'lankabell',
     # Global
     'paypal', 'amazon', 'google', 'facebook', 'apple', 'microsoft',
     'netflix', 'instagram', 'whatsapp', 'dhl', 'ebay', 'linkedin',
     'twitter', 'youtube', 'dropbox', 'adobe', 'office', 'outlook',
+    # Apple services (targeted in typosquatting attacks)
+    'icloud', 'appleid', 'itunes', 'appstore',
 }
 
 URL_SHORTENERS = {
@@ -182,15 +184,36 @@ def extract_features(url: str) -> Dict[str, float]:
     f22 = 1.0 if tld in TRUSTED_TLDS else 0.0
 
     # --- Feature 23: phishing_keyword_count ---
-    all_text = url_lower.replace('/', ' ').replace('-', ' ').replace('_', ' ').replace('.', ' ')
-    words = set(re.split(r'\W+', all_text))
+    # Scope: hyphen-connected host segments + full path/query.
+    # Dot-separated subdomains (e.g. 'login' in login.bank.com) are excluded —
+    # they are legitimate URL structure. Only hyphens in a hostname indicate
+    # deliberate keyword stuffing (e.g. secure-login.evil.com).
+    host_hyphen_words: set = set()
+    for seg in host.split('.'):
+        if '-' in seg:
+            host_hyphen_words.update(w for w in seg.lower().split('-') if w)
+    path_query_words = set(re.split(r'\W+', (path + ' ' + query).lower()))
+    words = host_hyphen_words | path_query_words
     f23 = float(len(PHISHING_KEYWORDS & words))
 
     # --- Feature 24: brand_keyword_count ---
-    f24 = float(len(BRAND_KEYWORDS & words))
+    # Brand keywords scan only host segments (dot AND hyphen split) — NOT path/query.
+    # TLD substitution attacks (combank.net impersonating combank.lk) put the brand name
+    # in the SLD with no hyphens, so all dot-separated host segments must be checked.
+    # Excluding path/query avoids false positives on legitimate URLs that mention brand
+    # names in their content paths (e.g. discuss.python.org/google-sheets-api/).
+    all_host_words: set = set()
+    for seg in host.split('.'):
+        lower_seg = seg.lower()
+        all_host_words.add(lower_seg)
+        if '-' in lower_seg:
+            all_host_words.update(w for w in lower_seg.split('-') if w)
+    f24 = float(len(BRAND_KEYWORDS & all_host_words))
 
     # --- Feature 25: has_url_shortener ---
-    f25 = 1.0 if any(s in host for s in URL_SHORTENERS) else 0.0
+    # Use exact domain match — substring check causes false positives
+    # (e.g. 't.co' appears inside 'security-alert.com')
+    f25 = 1.0 if any(host == s or host.endswith('.' + s) for s in URL_SHORTENERS) else 0.0
 
     # --- Feature 26: num_query_params ---
     if query:
@@ -229,7 +252,7 @@ def extract_features(url: str) -> Dict[str, float]:
 
     # --- Feature 35: has_tld_in_path (TLD appearing inside path — common phishing trick) ---
     tld_in_path = bool(re.search(
-        r'\.(com|net|org|gov|edu|bank|secure|login)\b', path, re.IGNORECASE
+        r'/(?:[a-zA-Z0-9-]+\.)+(com|net|org|gov|edu|bank|secure|login)(?:/|$)', path, re.IGNORECASE
     ))
     f35 = 1.0 if tld_in_path else 0.0
 

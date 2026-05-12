@@ -14,14 +14,14 @@ import os
 import re
 import urllib.request
 
-ANDROID_ASSETS_DIR = '../android/app/src/main/assets'
+ANDROID_ASSETS_DIR = '../SafeLink Android/app/src/main/assets'
 BLOCKLIST_PATH = os.path.join(ANDROID_ASSETS_DIR, 'blocklist.txt')
 WHITELIST_PATH = os.path.join(ANDROID_ASSETS_DIR, 'whitelist.txt')
 
 # Source URLs
 URLHAUS_HOSTS_URL = 'https://urlhaus.abuse.ch/downloads/hostfile/'
 STEVENBLACK_URL = (
-    'https://raw.githubusercontent.com/StevenBlack/hosts/master/hosts'
+    'https://raw.githubusercontent.com/StevenBlack/hosts/a37afe9499df7a23fa4aee0c04cb2011a513bb3a/hosts'
 )
 
 # Static whitelist — 134 trusted domains (Sri Lankan + global)
@@ -37,14 +37,18 @@ STATIC_WHITELIST = sorted([
     'seylanbank.lk', 'unionb.lk', 'panasian.lk',
     # Sri Lankan telcos
     'dialog.lk', 'mobitel.lk', 'slt.lk', 'hutch.lk', 'airtel.lk',
+    # Sri Lankan utilities & transport
+    'ceb.lk', 'waterboard.lk', 'pickme.lk', 'uber.com', 'srilankan.com',
+    # Sri Lankan commerce
+    'ikman.lk', 'daraz.lk', 'keellssuper.com', 'cargillsce.com',
     # Sri Lankan news
-    'dailymirror.lk', 'sundaytimes.lk', 'island.lk', 'adaderana.lk',
+    'dailymirror.lk', 'sundaytimes.lk', 'island.lk', 'adaderana.lk', 'newsfirst.lk', 'hirunews.lk',
     # Global search / social
-    'google.com', 'google.lk', 'bing.com', 'yahoo.com', 'duckduckgo.com',
+    'forms.gle', 'google.com', 'google.lk', 'bing.com', 'yahoo.com', 'duckduckgo.com',
     'facebook.com', 'instagram.com', 'twitter.com', 'x.com',
-    'linkedin.com', 'youtube.com', 'reddit.com', 'whatsapp.com',
-    # Global commerce
-    'amazon.com', 'ebay.com', 'paypal.com', 'stripe.com',
+    'linkedin.com', 'youtube.com', 'youtu.be', 'reddit.com', 'whatsapp.com',
+    # Global commerce & travel
+    'amazon.com', 'ebay.com', 'paypal.com', 'stripe.com', 'booking.com',
     # Global tech
     'apple.com', 'microsoft.com', 'github.com', 'stackoverflow.com',
     'wikipedia.org', 'cloudflare.com', 'cloudflare-dns.com',
@@ -57,13 +61,19 @@ STATIC_WHITELIST = sorted([
     'netflix.com', 'spotify.com', 'twitch.tv', 'tiktok.com',
     # Others
     'dropbox.com', 'drive.google.com', 'docs.google.com',
-    'zoom.us', 'teams.microsoft.com', 'slack.com',
+    'zoom.us', 'teams.microsoft.com', 'slack.com', 'trello.com',
     'adobe.com', 'office.com', 'live.com',
     'wordpress.com', 'blogspot.com', 'medium.com',
     'w3.org', 'schema.org', 'iana.org',
     # Anthropic / AI (for SafeLink itself)
     'anthropic.com', 'openai.com',
 ])
+
+
+# Manually verified phishing/impersonation domains — always included regardless of feed updates
+MANUAL_BLOCKLIST = {
+    'support-apple.com-verify.com',   # Apple brand impersonation via .com-verify.com trick
+}
 
 
 def _parse_hosts_file(content: str) -> set:
@@ -126,6 +136,10 @@ def main():
         blocklist.update(domains)
     except Exception as e:
         print(f"  [WARN] StevenBlack download failed: {e}")
+
+    # --- Manual entries ---
+    blocklist.update(MANUAL_BLOCKLIST)
+    print(f"  Manual entries: {len(MANUAL_BLOCKLIST)}")
 
     print(f"\n[MERGE] Total before whitelist removal: {len(blocklist):,}")
 
