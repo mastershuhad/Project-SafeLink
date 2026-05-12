@@ -271,7 +271,12 @@ object FusionEngine {
         if (cnnSaysMalicious == bertSaysMalicious) {
             val avgMalicious = (cnnMalicious + bertScore) / 2f
             val verdict = if (avgMalicious > SAFE_THRESHOLD) Verdict.MALICIOUS else Verdict.SAFE
-            val confidence = if (verdict == Verdict.MALICIOUS) avgMalicious else (1f - avgMalicious)
+            // Use max (not average) to match Python pipeline: max preserves the stronger signal
+            // and ensures high BERT confidence (e.g. 0.99) isn't diluted by a moderate CNN score.
+            val confidence = if (verdict == Verdict.MALICIOUS)
+                maxOf(cnnMalicious, bertScore)
+            else
+                maxOf(1f - cnnMalicious, 1f - bertScore)
             // Structural SAFE override: both models agree safe but high structural risk
             // (hyphens + phishing keywords + brand keyword) — force WARNING
             if (verdict == Verdict.SAFE && rawFeatures != null && structuralRisk(rawFeatures) >= 3.5f) {
