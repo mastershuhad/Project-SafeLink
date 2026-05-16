@@ -197,7 +197,7 @@ class SafeLinkPredictor(
             val ae = App.autoencoderDetector
             if (ae != null) {
                 val scaledFeatures = App.featureScaler.scale(rawFeatures)
-                ae.detect(scaledFeatures, rawFeatures[0])
+                ae.detect(scaledFeatures, url.length.toFloat())
             } else {
                 AnomalyResult(mse = 0f, isAnomaly = false, category = "medium", threshold = 0.02f)
             }
@@ -215,29 +215,6 @@ class SafeLinkPredictor(
 
         // Fusion — pass rawFeatures to enable Option A feature-nullity gate
         var fusion = contextAdjust(url, rawFeatures, FusionEngine.fuse(cnnProbs, bertScore, anomalyResult, rawFeatures))
-
-        // Option E: Structural Risk post-fusion cap
-        // MALICIOUS but structural_risk == 0  → SAFE  (models fired on character/token patterns
-        //   only — no concrete phishing features: no hyphens+keywords, no suspicious TLD,
-        //   no brand SLD, no shortener, no IP, no @ sign).  Product slugs (xiaomi-15-5g),
-        //   tech paths, and SPA fragments land here.
-        // MALICIOUS but 0 < structural_risk < STRUCTURAL_RISK_MIN  → WARNING (minimal evidence).
-        val structRisk = FusionEngine.structuralRisk(rawFeatures)
-        if (fusion.verdict == Verdict.MALICIOUS && structRisk < FusionEngine.STRUCTURAL_RISK_MIN) {
-            fusion = if (structRisk == 0f) {
-                fusion.copy(
-                    verdict = Verdict.SAFE,
-                    confidence = 0.60f,
-                    reason = "${fusion.reason} → SAFE (structural_risk=0, pattern-only signal)",
-                )
-            } else {
-                fusion.copy(
-                    verdict = Verdict.WARNING,
-                    confidence = 0.65f,
-                    reason = "${fusion.reason} → WARNING (structural_risk=${String.format("%.2f", structRisk)}, minimal evidence)",
-                )
-            }
-        }
 
         // ── Confidence gate ────────────────────────────────────────────────────
         // MALICIOUS is reserved for L0-blocklist hits and very high-confidence
@@ -346,10 +323,9 @@ class SafeLinkPredictor(
         // User-hosting platform — model bias runs high against these domains
         val isHostedPlatform = USER_HOSTED_PLATFORMS.any { p -> host == p || host.endsWith(".$p") }
 
-        // Safe path words — only downgrade when NO phishing keywords are also present
-        val phishingKwCount = rawFeatures.getOrElse(22) { 0f }
+        // Safe path words — only downgrade when no structural phishing evidence is present
         val pathWords = path.split("/", "-", "_", ".").toSet()
-        val hasSafePathWord = phishingKwCount == 0f && SAFE_PATH_WORDS.intersect(pathWords).isNotEmpty()
+        val hasSafePathWord = FusionEngine.allPhishingClean(rawFeatures) && SAFE_PATH_WORDS.intersect(pathWords).isNotEmpty()
 
         if (!isHostedPlatform && !hasSafePathWord) return fusion
 

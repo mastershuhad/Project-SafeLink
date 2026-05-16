@@ -17,7 +17,7 @@ Data sources:
   4. tranco_top1m.csv          (~10K rows — all benign)
   5. urlhaus.csv               (~170K rows — all malware)
 
-Output: data/safelink_dataset.csv  (url, label, + 36 feature columns)
+Output: data/safelink_dataset.csv  (url, label, + 22 feature columns)
 """
 
 import os
@@ -156,7 +156,7 @@ def _extract_chunk(chunk_urls):
             vec = extract_feature_vector(str(url))
             results.append(vec)
         except Exception:
-            results.append([0.0] * 36)
+            results.append([0.0] * 22)
     return results
 
 
@@ -192,7 +192,7 @@ def main():
     urls = combined['url'].tolist()
     chunks = [urls[i:i + CHUNK_SIZE] for i in range(0, len(urls), CHUNK_SIZE)]
 
-    print(f"\n[FEATURES] Extracting 36 features from {len(urls):,} URLs using {N_WORKERS} workers...")
+    print(f"\n[FEATURES] Extracting 22 features from {len(urls):,} URLs using {N_WORKERS} workers...")
     all_features = []
 
     with ThreadPoolExecutor(max_workers=N_WORKERS) as executor:

@@ -23,7 +23,7 @@ from sklearn.preprocessing import StandardScaler
 import tensorflow as tf
 from tensorflow import keras
 
-from feature_extractor import FEATURE_COLUMNS
+from feature_extractor import FEATURE_COLUMNS, N_FEATURES
 
 DATA_PATH = 'data/safelink_dataset.csv'
 OUTPUT_DIR = 'models'
@@ -36,9 +36,7 @@ SCALER_PATH = os.path.join(OUTPUT_DIR, 'scaler_params.json')
 RANDOM_SEED = 42
 BATCH_SIZE = 256
 EPOCHS = 30
-LATENT_DIM = 12
-
-URL_LENGTH_COL = 'url_length'
+LATENT_DIM = 10
 
 # Length category thresholds (mirrors Kotlin AutoencoderDetector.kt)
 SHORT_MAX = 30
@@ -54,13 +52,13 @@ def _length_category(url_length: float) -> str:
         return 'long'
 
 
-def build_autoencoder(input_dim: int = 36) -> keras.Model:
+def build_autoencoder(input_dim: int = N_FEATURES) -> keras.Model:
     inp = keras.Input(shape=(input_dim,), name='ae_input')
     # Encoder
-    x = keras.layers.Dense(24, activation='relu')(inp)
+    x = keras.layers.Dense(16, activation='relu')(inp)
     x = keras.layers.Dense(LATENT_DIM, activation='relu', name='latent')(x)
     # Decoder
-    x = keras.layers.Dense(24, activation='relu')(x)
+    x = keras.layers.Dense(16, activation='relu')(x)
     out = keras.layers.Dense(input_dim, activation='linear', name='ae_output')(x)
     model = keras.Model(inputs=inp, outputs=out, name='autoencoder')
     return model
@@ -94,14 +92,16 @@ def main():
 
     with open(SCALER_PATH) as f:
         scaler_params = json.load(f)
-    assert scaler_params['n_features'] == 36, "Scaler n_features must be 36"
+    assert scaler_params['n_features'] == N_FEATURES, \
+        f"Scaler n_features must be {N_FEATURES}, got {scaler_params['n_features']}"
 
-    mean_ = np.array(scaler_params['mean']).astype(np.float32)
+    mean_  = np.array(scaler_params['mean']).astype(np.float32)
     scale_ = np.array(scaler_params['scale']).astype(np.float32)
 
     # --- Extract and scale features ---
     X = benign_df[FEATURE_COLUMNS].values.astype(np.float32)
-    url_lengths = benign_df[URL_LENGTH_COL].values
+    # URL length for length-category thresholds — computed directly from URL string
+    url_lengths = benign_df['url'].str.len().values
 
     X_scaled = ((X - mean_) / scale_).astype(np.float32)
 
@@ -113,7 +113,7 @@ def main():
     print(f"[SPLIT] Train: {len(X_train):,}  Val: {len(X_val):,}")
 
     # --- Build and train autoencoder ---
-    ae = build_autoencoder(input_dim=36)
+    ae = build_autoencoder(input_dim=N_FEATURES)
     ae.summary()
     ae.compile(optimizer=keras.optimizers.Adam(1e-3), loss='mse')
 

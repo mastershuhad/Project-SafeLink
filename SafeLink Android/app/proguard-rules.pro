@@ -1,6 +1,17 @@
 # SafeLink ProGuard rules
 
-# TensorFlow Lite
+# General
+-keepattributes Signature, AnnotationDefault, EnclosingMethod, InnerClasses, RuntimeVisibleAnnotations, RuntimeVisibleParameterAnnotations, RuntimeVisibleTypeAnnotations
+
+# Missing classes detected by R8
+-dontwarn com.google.auto.value.AutoValue$Builder
+-dontwarn com.google.auto.value.AutoValue
+
+# LiteRT (Successor to TensorFlow Lite)
+-keep class com.google.ai.edge.litert.** { *; }
+-dontwarn com.google.ai.edge.litert.**
+
+# TensorFlow Lite (Legacy/Compatibility)
 -keep class org.tensorflow.lite.** { *; }
 -keep class org.tensorflow.lite.support.** { *; }
 -keep class org.tensorflow.lite.gpu.** { *; }
@@ -14,7 +25,9 @@
 
 # ONNX Runtime
 -keep class ai.onnxruntime.** { *; }
+-keep class com.microsoft.onnxruntime.** { *; }
 -dontwarn ai.onnxruntime.**
+-dontwarn com.microsoft.onnxruntime.**
 
 # OkHttp
 -dontwarn okhttp3.**

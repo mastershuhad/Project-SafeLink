@@ -18,11 +18,11 @@ class FeatureScaler(context: Context) {
     init {
         val json = context.assets.open("scaler_params.json").bufferedReader().readText()
         params = Gson().fromJson(json, ScalerParams::class.java)
-        require(params.nFeatures == 36) {
-            "scaler_params.json n_features must be 36, got ${params.nFeatures}"
+        require(params.nFeatures == 22) {
+            "scaler_params.json n_features must be 22, got ${params.nFeatures}"
         }
-        require(params.mean.size == 36 && params.scale.size == 36) {
-            "scaler mean/scale arrays must each have 36 elements"
+        require(params.mean.size == 22 && params.scale.size == 22) {
+            "scaler mean/scale arrays must each have 22 elements"
         }
     }
 
@@ -31,8 +31,8 @@ class FeatureScaler(context: Context) {
      * Handles divide-by-zero for constant features (scale ≈ 0) by leaving value as-is.
      */
     fun scale(features: FloatArray): FloatArray {
-        require(features.size == 36) { "Expected 36 features, got ${features.size}" }
-        return FloatArray(36) { i ->
+        require(features.size == 22) { "Expected 22 features, got ${features.size}" }
+        return FloatArray(22) { i ->
             val s = params.scale[i]
             if (s < 1e-8) features[i]
             else ((features[i] - params.mean[i]) / s).toFloat()

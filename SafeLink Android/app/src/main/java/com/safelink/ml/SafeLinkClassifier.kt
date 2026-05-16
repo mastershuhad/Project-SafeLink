@@ -7,7 +7,7 @@ import org.tensorflow.lite.support.common.FileUtil
 /**
  * CNN+Dense dual-stream TFLite classifier.
  * Inputs:  seq_input  IntArray(200)   — tokenized URL
- *          num_input  FloatArray(36)  — scaled feature vector
+ *          num_input  FloatArray(22)  — scaled feature vector
  * Output:  FloatArray(3)              — [p_safe, p_warning, p_malicious]
  */
 class SafeLinkClassifier(context: Context) : AutoCloseable {
@@ -23,7 +23,7 @@ class SafeLinkClassifier(context: Context) : AutoCloseable {
     /** Returns [p_safe, p_warning, p_malicious] with temperature-scaled confidence. */
     fun classify(seqInput: IntArray, numInput: FloatArray): FloatArray {
         require(seqInput.size == UrlTokenizer.SEQ_LEN)
-        require(numInput.size == 36)
+        require(numInput.size == 22)
 
         val output = Array(1) { FloatArray(3) }
 

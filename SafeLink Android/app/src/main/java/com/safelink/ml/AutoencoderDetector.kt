@@ -44,14 +44,14 @@ class AutoencoderDetector(context: Context) : AutoCloseable {
 
     /**
      * Runs autoencoder reconstruction and computes MSE.
-     * [scaledFeatures] must already be StandardScaler-normalized (36 floats).
-     * [urlLength] is the raw url_length feature (before scaling) for category selection.
+     * [scaledFeatures] must already be StandardScaler-normalized (22 floats).
+     * [urlLength] is the raw URL character length (before scaling) for category selection.
      */
     fun detect(scaledFeatures: FloatArray, urlLength: Float): AnomalyResult {
-        require(scaledFeatures.size == 36)
+        require(scaledFeatures.size == 22)
 
         val input = arrayOf(scaledFeatures)
-        val output = Array(1) { FloatArray(36) }
+        val output = Array(1) { FloatArray(22) }
 
         interpreter.run(input, output)
 
@@ -59,7 +59,7 @@ class AutoencoderDetector(context: Context) : AutoCloseable {
         val mse = scaledFeatures.indices.sumOf { i ->
             val diff = (scaledFeatures[i] - recon[i]).toDouble()
             diff * diff
-        }.toFloat() / 36f
+        }.toFloat() / 22f
 
         val category = when {
             urlLength < shortMax -> "short"
